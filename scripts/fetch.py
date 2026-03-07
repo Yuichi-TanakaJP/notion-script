@@ -4,6 +4,7 @@ config.yaml で対象 DB・フィールドを指定して使用する
 
 使い方:
   python scripts/fetch.py --config scripts/memo_db/config.yaml
+  python scripts/fetch.py --config scripts/memo_db/config.yaml --all  # 全件出力
 
 出力先: data/<config のフォルダ名>/raw.md
 """
@@ -70,6 +71,7 @@ def fmt(val) -> str:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True, help="config.yaml のパス")
+    parser.add_argument("--all", action="store_true", help="空欄の有無に関わらず全件出力")
     args = parser.parse_args()
 
     with open(args.config, encoding="utf-8") as f:
@@ -100,13 +102,15 @@ def main():
             for f in fields
         }
 
-        if any(v is None or v == [] or v == "" for v in values.values()):
+        has_blank = any(v is None or v == [] or v == "" for v in values.values())
+        if args.all or has_blank:
             blank_pages.append((page_id, title, values))
 
+    label = "全件" if args.all else "空欄補完対象"
     lines = [
-        f"# {db_name} - 空欄補完対象データ",
+        f"# {db_name} - {label}データ",
         f"取得日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"総件数: {len(pages)} 件中 {len(blank_pages)} 件が補完対象",
+        f"総件数: {len(pages)} 件中 {len(blank_pages)} 件が対象",
         "",
     ]
 
@@ -121,7 +125,8 @@ def main():
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
-    print(f"保存完了: {output_path} ({len(blank_pages)} 件)")
+    mode = "全件" if args.all else "空欄のみ"
+    print(f"保存完了: {output_path} ({len(blank_pages)} 件, {mode})")
 
 
 if __name__ == "__main__":

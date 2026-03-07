@@ -32,7 +32,7 @@ NOTION_TOKEN=secret_xxx
 ```
 
 - Notion DB から全ページを取得
-- 空欄フィールドがあるエントリのみ `data/<DB名>/raw.md` に保存
+- 空欄フィールドがあるエントリのみ `data/<DB名>/raw.md` に保存（`--all` で全件出力も可）
 
 ### Step 2: AI 補完（Claude Code 上で手動実行）
 
@@ -93,6 +93,31 @@ fields:
 ```
 
 > 対応フィールド型: `select`, `multi_select`, `status`, `rich_text`
+
+---
+
+## スクリプト一覧
+
+| スクリプト | 説明 | 主なオプション |
+|-----------|------|--------------|
+| `scripts/fetch.py` | Notion DB からデータ取得 → `raw.md` | `--config`（必須）, `--all`（全件） |
+| `scripts/update.py` | `completed.md` を Notion に書き戻し | `--config`（必須）, `--dry-run`, `--limit N` |
+| `scripts/list_dbs.py` | アクセス可能な DB 一覧を表示 | なし |
+
+### fetch.py オプション詳細
+
+| オプション | 説明 |
+|-----------|------|
+| `--config` | 対象 DB の config.yaml パスを指定（必須） |
+| `--all` | 空欄の有無に関わらず全件出力（デフォルトは空欄エントリのみ） |
+
+```bash
+# 空欄エントリのみ（デフォルト）
+.venv/Scripts/python scripts/fetch.py --config scripts/memo_db/config.yaml
+
+# 全件出力
+.venv/Scripts/python scripts/fetch.py --config scripts/memo_db/config.yaml --all
+```
 
 ---
 

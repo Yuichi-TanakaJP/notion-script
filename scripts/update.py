@@ -45,7 +45,10 @@ def parse_completed_md(path: str, fields: list) -> list:
         }
 
         for fname in field_names:
-            m = re.search(rf"- {re.escape(fname)}: (.+)$", block, re.MULTILINE)
+            m = re.search(
+                rf"^- {re.escape(fname)}: (.*?)(?=\n- |\Z)",
+                block, re.MULTILINE | re.DOTALL
+            )
             if m:
                 val = m.group(1).strip()
                 if val and val != "[空欄]":
@@ -68,27 +71,33 @@ def get_field_value(prop: dict, field_type: str):
     return None
 
 
-def get_existing_props(page_id: str, fields: list) -> dict:
+def get_existing_props(page_id: str, fields: list) -> tuple:
+    """(values dict, actual_types dict) を返す。actual_types はAPIから取得した実際の型。"""
     page = notion.pages.retrieve(page_id=page_id)
     props = page["properties"]
-    return {
-        f["name"]: get_field_value(props.get(f["name"], {}), f["type"])
-        for f in fields
-    }
+    values = {}
+    actual_types = {}
+    for f in fields:
+        fname = f["name"]
+        prop = props.get(fname, {})
+        actual_type = prop.get("type", f["type"])
+        actual_types[fname] = actual_type
+        values[fname] = get_field_value(prop, actual_type)
+    return values, actual_types
 
 
-def build_update_payload(entry: dict, existing: dict, fields: list) -> dict:
+def build_update_payload(entry: dict, existing: dict, actual_types: dict, fields: list) -> dict:
     props = {}
     for field in fields:
         fname = field["name"]
-        ftype = field["type"]
+        ftype = actual_types.get(fname, field["type"])  # API実際の型を優先
         if fname not in entry or existing.get(fname):
             continue
         val = entry[fname]
         if ftype == "select":
             props[fname] = {"select": {"name": val}}
         elif ftype == "multi_select":
-            tags = [t.strip() for t in val.split(",")]
+            tags = [t.strip() for t in val.split(",") if t.strip()]  # Fix 4: 空文字除外
             props[fname] = {"multi_select": [{"name": t} for t in tags]}
         elif ftype == "status":
             props[fname] = {"status": {"name": val}}
@@ -132,8 +141,8 @@ def main():
         page_id = entry["page_id"]
         name = entry["name"]
         try:
-            existing = get_existing_props(page_id, fields)
-            payload = build_update_payload(entry, existing, fields)
+            existing, actual_types = get_existing_props(page_id, fields)
+            payload = build_update_payload(entry, existing, actual_types, fields)
 
             if not payload:
                 print(f"[SKIP]    {name} -全フィールド補完済み")

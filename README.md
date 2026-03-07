@@ -38,10 +38,21 @@ NOTION_TOKEN=secret_xxx
 
 `data/<DB名>/raw.md` の内容を Claude Code に渡して `data/<DB名>/completed.md` を生成してもらう。
 
-プロンプト例：
+**スキルを使う場合（推奨）:**
+
+Claude Code のチャットで以下を入力するだけ：
+
 ```
-data/memo_db/raw.md を読んで、空欄フィールドを補完した completed.md を同じフォルダに生成してください。
+/notion-complete
 ```
+
+DB の選択肢が表示されるので番号を入力すると補完が始まる。DB を指定する場合：
+
+```
+/notion-complete memo_db
+```
+
+> スキルは `~/.claude/skills/notion-complete.md` に定義済み。
 
 ### Step 3: Notion 更新
 

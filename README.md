@@ -2,15 +2,7 @@
 
 Notion DB の空欄フィールドを AI 補完するスクリプト集。
 
----
-
-## 対象 DB
-
-| DB名 | DB ID | URL |
-|------|-------|-----|
-| めも | `226cae2d-86b8-80f8-801c-f207af0c7387` | https://www.notion.so/226cae2d86b880f8801cf207af0c7387 |
-
-補完対象フィールド: `カテゴリー`（select）、`タグ`（multi_select）、`ステータス`（select）、`メモ`（rich_text）
+対象 DB の詳細は [DATABASES.md](DATABASES.md) を参照。
 
 ---
 
@@ -36,37 +28,60 @@ NOTION_TOKEN=secret_xxx
 ### Step 1: データ取得
 
 ```bash
-.venv/Scripts/python scripts/memo_db/01_fetch.py
+.venv/Scripts/python scripts/fetch.py --config scripts/memo_db/config.yaml
 ```
 
 - Notion DB から全ページを取得
-- 空欄フィールドがあるエントリのみ `data/raw.md` に保存
+- 空欄フィールドがあるエントリのみ `data/<DB名>/raw.md` に保存
 
 ### Step 2: AI 補完（Claude Code 上で手動実行）
 
-`data/raw.md` の内容を Claude Code に渡して `data/completed.md` を生成してもらう。
+`data/<DB名>/raw.md` の内容を Claude Code に渡して `data/<DB名>/completed.md` を生成してもらう。
 
 プロンプト例：
 ```
-raw.md を読んで、空欄フィールドを補完した completed.md を生成してください。
+data/memo_db/raw.md を読んで、空欄フィールドを補完した completed.md を同じフォルダに生成してください。
 ```
 
 ### Step 3: Notion 更新
 
 ```bash
 # 動作確認（Notion には書き込まない）
-.venv/Scripts/python scripts/memo_db/03_update.py --dry-run --limit 5
+.venv/Scripts/python scripts/update.py --config scripts/memo_db/config.yaml --dry-run --limit 5
 
 # 本番実行
-.venv/Scripts/python scripts/memo_db/03_update.py
+.venv/Scripts/python scripts/update.py --config scripts/memo_db/config.yaml
 ```
 
 オプション:
 
 | オプション | 説明 |
 |-----------|------|
+| `--config` | 対象 DB の config.yaml パスを指定（必須） |
 | `--dry-run` | 更新内容を表示するだけ（Notion には書き込まない） |
 | `--limit N` | 最初の N 件だけ処理 |
+
+---
+
+## DB の追加・確認
+
+アクセス可能な DB 一覧を確認：
+
+```bash
+.venv/Scripts/python scripts/list_dbs.py
+```
+
+新しい DB を追加するには `scripts/<フォルダ名>/config.yaml` を作成する：
+
+```yaml
+db_name: DB名
+db_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+fields:
+  - name: フィールド名
+    type: select          # select / multi_select / status / rich_text
+```
+
+> 対応フィールド型: `select`, `multi_select`, `status`, `rich_text`
 
 ---
 
@@ -74,18 +89,27 @@ raw.md を読んで、空欄フィールドを補完した completed.md を生�
 
 ```
 notion-script/
-├── .env                    # Notion トークン（git 管理外）
-├── .env.example            # トークンのキー名テンプレート
-├── requirements.txt        # 依存ライブラリ
+├── .env                         # Notion トークン（git 管理外）
+├── .env.example                 # トークンのキー名テンプレート
+├── requirements.txt             # 依存ライブラリ
+├── DATABASES.md                 # 対象 DB・フィールド一覧
 ├── data/
-│   ├── raw.md             # Step1 の出力（git 管理外）
-│   └── completed.md       # Step2 の出力（git 管理外）
+│   └── <DB名>/
+│       ├── raw.md               # Step1 の出力（git 管理外）
+│       └── completed.md         # Step2 の出力（git 管理外）
 ├── lib/
-│   └── notion_helper.py   # 共通クライアント・ユーティリティ
+│   └── notion_helper.py         # 共通クライアント・ユーティリティ
 └── scripts/
-    └── memo_db/           # めも DB 用スクリプト
-        ├── 01_fetch.py    # Step1: Notion → raw.md
-        └── 03_update.py   # Step3: completed.md → Notion
+    ├── fetch.py                 # Step1: Notion → raw.md（汎用）
+    ├── update.py                # Step3: completed.md → Notion（汎用）
+    ├── list_dbs.py              # アクセス可能な DB 一覧を表示
+    ├── memo_db/
+    │   ├── config.yaml          # めも DB の設定
+    │   └── ...
+    ├── life_todo/
+    │   └── config.yaml
+    └── task/
+        └── config.yaml          # （他 DB も同様）
 ```
 
 ---
@@ -93,5 +117,5 @@ notion-script/
 ## 注意事項
 
 - 既存データは上書きしない（空欄のみ補完）
-- `data/raw.md` と `data/completed.md` は git 管理外（`.gitignore` 済み）
+- `data/` 以下の `raw.md` / `completed.md` は git 管理外（`.gitignore` 済み）
 - `.env` は絶対に git にコミットしない

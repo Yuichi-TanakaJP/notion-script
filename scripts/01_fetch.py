@@ -15,7 +15,7 @@ from lib.notion_helper import (
     get_plain_text,
 )
 
-DB_ID = "226cae2d-86b8-805d-9c5c-000bb6f82ac7"
+DB_ID = "226cae2d-86b8-80f8-801c-f207af0c7387"
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "raw.md")
 
 
@@ -57,13 +57,7 @@ def main():
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
 
-    lines = [
-        "# めも DB - 取得データ",
-        f"取得日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-        f"総件数: {len(pages)} 件",
-        "",
-    ]
-
+    blank_pages = []
     for page in pages:
         props = page["properties"]
         page_id = page["id"]
@@ -80,6 +74,19 @@ def main():
 
         memo = get_plain_text(props.get("メモ", {}).get("rich_text", []))
 
+        # 空欄フィールドが1つ以上ある場合のみ対象
+        has_blank = any(v is None or v == [] or v == "" for v in [cat, tags, status, memo])
+        if has_blank:
+            blank_pages.append((page_id, title, cat, tags, status, memo))
+
+    lines = [
+        "# めも DB - 空欄補完対象データ",
+        f"取得日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"総件数: {len(pages)} 件中 {len(blank_pages)} 件が補完対象",
+        "",
+    ]
+
+    for page_id, title, cat, tags, status, memo in blank_pages:
         lines += [
             "---",
             "",
@@ -95,7 +102,7 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
-    print(f"保存完了: {OUTPUT_PATH}")
+    print(f"保存完了: {OUTPUT_PATH} ({len(blank_pages)} 件)")
 
 
 if __name__ == "__main__":

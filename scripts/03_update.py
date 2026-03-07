@@ -1,10 +1,17 @@
 """
 Step 3: data/completed.md を読み込んで Notion DB を更新する
 空欄フィールドのみ更新（既存データは上書きしない）
+
+使い方:
+  python scripts/03_update.py               # 全件更新
+  python scripts/03_update.py --dry-run     # 更新内容を確認するだけ（Notionには書き込まない）
+  python scripts/03_update.py --limit 3     # 最初の3件だけ更新
+  python scripts/03_update.py --dry-run --limit 3  # 最初の3件をドライラン
 """
 import sys
 import os
 import re
+import argparse
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -52,7 +59,8 @@ def get_existing_props(page_id: str) -> dict:
     props = page["properties"]
 
     status_prop = props.get("ステータス", {})
-    if status_prop.get("type") == "status":
+    status_type = status_prop.get("type", "select")  # 実際のフィールド型を記録
+    if status_type == "status":
         status = get_status_name(status_prop)
     else:
         status = get_select_name(status_prop)
@@ -61,6 +69,7 @@ def get_existing_props(page_id: str) -> dict:
         "カテゴリー": get_select_name(props.get("カテゴリー", {})),
         "タグ": get_multi_select_names(props.get("タグ", {})),
         "ステータス": status,
+        "ステータス型": status_type,  # build_update_payload で使う
         "メモ": get_plain_text(props.get("メモ", {}).get("rich_text", [])),
     }
 
@@ -76,7 +85,8 @@ def build_update_payload(entry: dict, existing: dict) -> dict:
         props["タグ"] = {"multi_select": [{"name": t} for t in tags]}
 
     if "ステータス" in entry and not existing["ステータス"]:
-        props["ステータス"] = {"status": {"name": entry["ステータス"]}}
+        status_type = existing.get("ステータス型", "select")
+        props["ステータス"] = {status_type: {"name": entry["ステータス"]}}
 
     if "メモ" in entry and not existing["メモ"]:
         props["メモ"] = {
@@ -87,12 +97,21 @@ def build_update_payload(entry: dict, existing: dict) -> dict:
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true", help="Notionに書き込まず確認のみ")
+    parser.add_argument("--limit", type=int, default=None, help="処理件数の上限")
+    args = parser.parse_args()
+
     if not os.path.exists(INPUT_PATH):
-        print(f"エラー: {INPUT_PATH} が見つかりません。先に02_analyze（AI補完）を実施してください。")
+        print(f"エラー: {INPUT_PATH} が見つかりません。先にAI補完を実施してください。")
         return
 
     entries = parse_completed_md(INPUT_PATH)
-    print(f"処理対象: {len(entries)} 件\n")
+    if args.limit:
+        entries = entries[: args.limit]
+
+    mode = "[DRY-RUN] " if args.dry_run else ""
+    print(f"{mode}処理対象: {len(entries)} 件\n")
 
     success = 0
     skipped = 0
@@ -106,20 +125,34 @@ def main():
             payload = build_update_payload(entry, existing)
 
             if not payload:
-                print(f"[SKIP]    {name} — 全フィールド補完済み")
+                print(f"[SKIP]    {name} -全フィールド補完済み")
                 skipped += 1
                 continue
 
-            notion.pages.update(page_id=page_id, properties=payload)
             updated_keys = ", ".join(payload.keys())
-            print(f"[OK]      {name} — 更新: {updated_keys}")
+            if args.dry_run:
+                print(f"[DRY-RUN] {name} -更新予定: {updated_keys}")
+            else:
+                notion.pages.update(page_id=page_id, properties=payload)
+                print(f"[OK]      {name} -更新: {updated_keys}")
             success += 1
 
         except Exception as e:
-            print(f"[ERROR]   {name} ({page_id}) — {e}")
+            print(f"[ERROR]   {name} ({page_id}) -{e}")
             failed += 1
 
-    print(f"\n完了: 成功={success}, スキップ={skipped}, 失敗={failed}")
+    label = "ドライラン" if args.dry_run else "完了"
+    print(f"\n{label}: 対象={success}, スキップ={skipped}, 失敗={failed}")
+
+    if not args.dry_run and os.path.exists(INPUT_PATH):
+        from datetime import datetime
+        footer = (
+            f"\n---\n"
+            f"\nNotion更新日時: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            f"\n結果: 成功={success}, スキップ={skipped}, 失敗={failed}"
+        )
+        with open(INPUT_PATH, "a", encoding="utf-8") as f:
+            f.write(footer)
 
 
 if __name__ == "__main__":

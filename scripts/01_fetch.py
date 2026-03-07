@@ -99,6 +99,12 @@ def main():
             "",
         ]
 
+    lines += [
+        "---",
+        "",
+        f"取得完了: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    ]
+
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 

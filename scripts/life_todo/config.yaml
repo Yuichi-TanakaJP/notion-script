@@ -1,0 +1,13 @@
+db_name: Life Todo
+db_id: 226cae2d-86b8-80a4-a94d-c7f2071bf5a9
+fields:
+- name: 重要度
+  type: select
+- name: タグ
+  type: multi_select
+- name: 進捗めも
+  type: rich_text
+- name: カテゴリー
+  type: select
+- name: ステータス
+  type: select

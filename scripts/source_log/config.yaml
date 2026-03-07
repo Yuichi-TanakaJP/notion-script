@@ -1,0 +1,5 @@
+db_name: Source LOG
+db_id: 220cae2d-86b8-8028-aee2-d3f8fb3fadb5
+fields:
+- name: 1行要約
+  type: rich_text

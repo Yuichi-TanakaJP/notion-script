@@ -1,0 +1,13 @@
+db_name: Task
+db_id: 21acae2d-86b8-81a6-9afb-cb0b42098991
+fields:
+- name: タグ
+  type: multi_select
+- name: 重要度
+  type: select
+- name: カテゴリー
+  type: select
+- name: ステータス
+  type: select
+- name: 進捗めも
+  type: rich_text

@@ -1,0 +1,5 @@
+db_name: タスクリスト
+db_id: 221cae2d-86b8-808c-bf67-fb78a361463a
+fields:
+- name: 選択
+  type: select

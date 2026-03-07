@@ -1,0 +1,5 @@
+db_name: Animal
+db_id: 220cae2d-86b8-80bb-b653-c296839567b1
+fields:
+- name: 種類
+  type: select

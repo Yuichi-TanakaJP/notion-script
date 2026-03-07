@@ -4,7 +4,7 @@ Step 1: Notion DB から全データを取得して data/raw.md に保存する
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from datetime import datetime
 from lib.notion_helper import (
@@ -16,7 +16,7 @@ from lib.notion_helper import (
 )
 
 DB_ID = "226cae2d-86b8-80f8-801c-f207af0c7387"
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "raw.md")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw.md")
 
 
 def get_title(props: dict) -> str:

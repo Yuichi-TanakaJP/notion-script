@@ -13,7 +13,7 @@ import os
 import re
 import argparse
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from lib.notion_helper import (
     notion,
@@ -23,7 +23,7 @@ from lib.notion_helper import (
     get_plain_text,
 )
 
-INPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "completed.md")
+INPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "completed.md")
 
 
 def parse_completed_md(path: str) -> list:

@@ -36,7 +36,7 @@ NOTION_TOKEN=secret_xxx
 ### Step 1: データ取得
 
 ```bash
-.venv/Scripts/python scripts/01_fetch.py
+.venv/Scripts/python scripts/memo_db/01_fetch.py
 ```
 
 - Notion DB から全ページを取得
@@ -55,10 +55,10 @@ raw.md を読んで、空欄フィールドを補完した completed.md を生�
 
 ```bash
 # 動作確認（Notion には書き込まない）
-.venv/Scripts/python scripts/03_update.py --dry-run --limit 5
+.venv/Scripts/python scripts/memo_db/03_update.py --dry-run --limit 5
 
 # 本番実行
-.venv/Scripts/python scripts/03_update.py
+.venv/Scripts/python scripts/memo_db/03_update.py
 ```
 
 オプション:
@@ -83,8 +83,9 @@ notion-script/
 ├── lib/
 │   └── notion_helper.py   # 共通クライアント・ユーティリティ
 └── scripts/
-    ├── 01_fetch.py        # Step1: Notion → raw.md
-    └── 03_update.py       # Step3: completed.md → Notion
+    └── memo_db/           # めも DB 用スクリプト
+        ├── 01_fetch.py    # Step1: Notion → raw.md
+        └── 03_update.py   # Step3: completed.md → Notion
 ```
 
 ---

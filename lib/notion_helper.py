@@ -10,7 +10,8 @@ notion = Client(auth=os.environ["NOTION_TOKEN"])
 def get_plain_text(rich_text_list: list) -> str | None:
     if not rich_text_list:
         return None
-    return rich_text_list[0].get("plain_text") or None
+    text = "".join(item.get("plain_text", "") for item in rich_text_list)
+    return text or None
 
 
 def get_select_name(prop: dict) -> str | None:

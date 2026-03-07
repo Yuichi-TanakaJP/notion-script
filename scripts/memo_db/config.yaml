@@ -1,0 +1,12 @@
+db_name: めも DB
+db_id: 226cae2d-86b8-80f8-801c-f207af0c7387
+
+fields:
+  - name: カテゴリー
+    type: select
+  - name: タグ
+    type: multi_select
+  - name: ステータス
+    type: select
+  - name: メモ
+    type: rich_text

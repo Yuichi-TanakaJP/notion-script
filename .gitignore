@@ -7,5 +7,5 @@ venv/
 *.egg-info/
 dist/
 .DS_Store
-data/raw.md
-data/completed.md
+data/**/raw.md
+data/**/completed.md

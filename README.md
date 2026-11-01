@@ -155,3 +155,17 @@ notion-script/
 - 既存データは上書きしない（空欄のみ補完）
 - `data/` 以下の `raw.md` / `completed.md` は git 管理外（`.gitignore` 済み）
 - `.env` は絶対に git にコミットしない
+
+## ローカル依存関係の固定と検査
+
+`requirements.lock` は Windows x64 / CPython 3.12 向けに、宣言済み依存と推移依存を解決した固定版です。uv 0.13.1で公開PyPIのwheelメタデータから生成し、ソースビルドは実行していません。
+
+Health Centerはこの固定ファイルを検査します。実行環境のインストール済み版とは別の記録です。ファイル追加だけでは既存venv・Docker・クラウド配備は更新されません。Linuxや別Python版へこのロックを流用せず、その対象環境で再生成・検証してください。
+
+宣言を変更したら、対象の固定ファイルも次のコマンドで再生成して差分と脆弱性を確認します（環境の更新は別作業）。
+
+```powershell
+uv --no-config pip compile requirements.txt --python-version 3.12 --python-platform windows --no-build --default-index https://pypi.org/simple --output-file requirements.lock
+```
+
+対象は宣言された依存の解決結果で、任意にインストールされた追加パッケージやパッケージング用build-system依存、OS本体は含みません。
